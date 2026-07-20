@@ -1,0 +1,23 @@
+NegocioFresa/
+│
+├── main.py                  # El archivo principal que arranca el sistema
+│
+├── base_datos/              # Módulo de persistencia
+│   ├── conexion.py          # Funciones para conectar a SQLite
+│   └── negocio_fresa.db     # Tu archivo de base de datos (se crea solo)
+│
+├── logica/                  # Los procesos de tu DFD Nivel 1 (El cerebro)
+│   ├── auth.py              # (P1) Validar credenciales
+│   ├── inventario.py        # (P2 y P3) Gestionar parámetros y productos
+│   ├── promociones.py       # (P4) Configurar promociones
+│   ├── ventas.py            # (P5) Descontar stock y registrar venta
+│   └── reportes.py          # (P6) Alertas y balances
+│
+├── vistas/                  # Las pantallas (Interfaz Gráfica con Tkinter)
+│   ├── ventana_login.py
+│   ├── ventana_principal.py
+│   ├── ventana_ventas.py
+│   └── ventana_inventario.py
+│
+└── recursos/                # Archivos estáticos
+    └── logo_fresa.png       # Imágenes, íconos, etc.
