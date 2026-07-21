@@ -3,7 +3,7 @@ modulo para la autenticacion de usuarios
 """
 
 import hashlib
-from base_datos.conexcion import obtener_conexion
+from base_datos.conexion import obtener_conexion
 
 def validar_credenciales(usuario, password):
     """
