@@ -1,0 +1,32 @@
+Podés hacer esto usando los botones de Visual Studio Code (en la pestaña de "Control de código fuente", el ícono de las ramitas a la izquierda), pero hacer los comandos en la terminal que ya tenés abierta es mucho más seguro para entender qué está pasando:
+
+1.Bajar los archivos de GitHub a tu compu (Pull):
+Sincroniza tu carpeta local con la nube.Asegurate de que la terminal diga PS C:\...\SISTEMAFRESA>. Para "descargar" cualquier cambio que esté en GitHub y no en tu compu, 
+ejecutá:Bashgit pull origin main
+(Nota: Si tu rama principal en GitHub se llama master, cambiá main por master).
+
+2.Crear una rama de trabajo:
+Buena práctica para proteger el código principal.Mencionaste que no hiciste ninguna rama. ¡Hagámoslo ahora! Es ideal para programar sin miedo a romper la versión estable. 
+Esto crea una rama llamada desarrollo-bd y te cambia automáticamente a ella:
+Bashgit checkout -b desarrollo-bd
+
+3.Crear el archivo y ejecutarlo:
+Añadir tu código localmente.Ahora sí, dentro de tu carpeta SISTEMAFRESA, creá la carpeta base_datos y adentro el archivo conexion.py con el código que te pasé antes.Una vez creado, ejecutalo en la terminal para que se genere el archivo .db:
+Bashpython base_datos/conexion.py
+
+4.Preparar los archivos (Add):
+Avisa a Git qué archivos nuevos vas a guardar.Una vez que la base de datos se creó con éxito, le decimos a Git que preste atención a la nueva carpeta y archivos:
+Bashgit add .
+(El punto al final significa "agregá todo lo nuevo o modificado en esta carpeta").
+
+5.Hacer el Commit:
+Guarda una 'foto' del estado actual de tu código.Le ponemos una etiqueta descriptiva a este guardado:
+Bashgit commit -m 
+"Estructura inicial: 
+BD SQLite y tablas creadas"
+
+6.Subir los cambios a GitHub (Push):
+Manda tu rama nueva a la nube.Finalmente, empujamos esta nueva rama (con el código y la BD) a tu repositorio en GitHub:
+Bashgit push -u origin desarrollo-bd
+
+Siguiendo esta secuencia, tu código va a quedar respaldado en GitHub, tu base de datos va a estar funcionando localmente, y vas a tener el entorno perfecto para empezar a programar la lógica.
