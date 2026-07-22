@@ -68,19 +68,17 @@ def inicializar_base_datos():
     # D3 Archivo Producto (el nucleo del inventario)
     cursor.execute('''
             CREATE TABLE IF NOT EXISTS productos(
-                codigo_barras TEXT PRIMARY KEY,
-                id_marca INTEGER NOT NULL,
-                id_capacidad INTEGER NOT NULL,
-                id_promocion INTEGER,
-                precio_compra REAL NOT NULL,
-                precio_venta REAL NOT NULL,
-                stock INTEGER NOT NULL DEFAULT 0,
-                stock_minimo INTEGER NOT NULL DEFAULT 5,
+                id_producto TEXT PRIMARY KEY,
+                id_marca INTEGER,
+                id_capacidad INTEGER,
+                precio_compra REAL,
+                precio_venta REAL,
+                stock_actual INTEGER,
+                stock_minimo INTEGER,
                 estado INTEGER DEFAULT 1,
                 FOREIGN KEY(id_marca) REFERENCES marcas(id),
-                FOREIGN KEY(id_capacidad) REFERENCES capacidades(id)
-                FOREIGN KEY(id_promocion) REFERENCES promociones(id)
-            )
+                FOREIGN KEY(id_capacidad) REFERENCES capacidades (id)
+            );
     ''')
 
     # D5 Archivo Venta (cabecera y detalle)

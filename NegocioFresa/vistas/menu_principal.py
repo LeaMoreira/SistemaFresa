@@ -4,6 +4,8 @@ tiene botones aun inactivos
 """
 
 import tkinter as tk
+from vistas.ventana_inventario import mostrar_ventana_parametros
+from vistas.ventana_producto import mostrar_ventana_productos
 
 def mostrar_menu_principal(usuario_actual):
     """
@@ -26,9 +28,11 @@ def mostrar_menu_principal(usuario_actual):
 
     # Botones de los procesos del DFD (inactivos por ahora)
     tk.Button(marco_botones, text="1. Gestión de Parámetros",
-            width=25, height=2).grid(row=0, column=0, padx=10, pady=10)
+                width=25, height=2,
+                command=lambda: mostrar_ventana_parametros(ventana)).grid(row=0, column=0, padx=10, pady=10)
     tk.Button(marco_botones, text="2. Gestión de Productos", 
-            width=25, height=2).grid(row=0, column=1, padx=10, pady=10)
+                width=25, height=2,
+                command=lambda: mostrar_ventana_productos(ventana)).grid(row=0, column=1, padx=10, pady=10)
     tk.Button(marco_botones, text="3. Promociones",
             width=25, height=2).grid(row=1, column=0, padx=10, pady=10)
     tk.Button(marco_botones, text="4. Ventas",
