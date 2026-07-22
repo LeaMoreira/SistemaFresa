@@ -42,7 +42,7 @@ def inicializar_base_datos():
     cursor.execute('''
             CREATE TABLE IF NOT EXISTS marcas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT NOT NULL INIQUE,
+                nombre TEXT NOT NULL UNIQUE,
                 estado INTEGER DEFAULT 1
             )
     ''')
