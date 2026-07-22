@@ -5,6 +5,7 @@ modulo vista para login de usuario
 import tkinter as tk
 from tkinter import messagebox
 from logica.auth import validar_credenciales
+from vistas.menu_principal import mostrar_menu_principal
 
 def iniciar_sesion(ventana_login, entry_usuario, entry_password):
     """
@@ -27,6 +28,7 @@ def iniciar_sesion(ventana_login, entry_usuario, entry_password):
         messagebox.showinfo("Exito", "Inicio de sesion exitoso")
         # si el login es correcto, destruimos la ventana para luego abrir el menu principal
         ventana_login.destroy()
+        mostrar_menu_principal(resultado)
     else:
         messagebox.showerror("Error", "Usuario o contraseña incorrectos o usuario inactivo")
 
