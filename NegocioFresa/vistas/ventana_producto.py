@@ -12,7 +12,8 @@ from tkinter import ttk, messagebox
 from logica.inventario import (
     registrar_producto, listar_producto,
     listar_marcas, listar_capacidades,
-    dar_baja_logica_producto
+    dar_baja_logica_producto, verificar_estado_producto,
+    reactivar_producto_individual, reactivar_todos_los_productos
 )
 
 def actualizar_grilla_productos(tree):
@@ -54,6 +55,28 @@ def guardar_producto(entries, combos, tree):
         messagebox.showwarning("Atencion", "Por favor complete todos los campos")
         return
 
+    # 1 Verificamos el estado del producto (Opcion para lectora de codigo)
+    estado_actual = verificar_estado_producto(id_p)
+
+    if estado_actual == 0:
+        # El producto existe pero esta de baja
+        respuesta = messagebox.askyesno(
+            "Producto Inactivo",
+            f"El codigo {id_p} ya pertenece a un producto dado de baja.\n Desea reactivarlo usando el stock ingresado ({stock})?"
+        )
+        if respuesta:
+            if reactivar_producto_individual(id_p, stock):
+                messagebox.showinfo("Exito", "Producto reactivado correctamente")
+                for e in entries.values():
+                    e.delete(0, tk.END)
+                actualizar_grilla_productos(tree)
+                entries['id'].focus()
+        return # Se corta la ejecucion aca
+    elif estado_actual == 1:
+        # El producto existe y esta activo
+        messagebox.showerror("Error", "El Codigo/ID de producto ya existe y esta activo en el sistema")
+        return
+
     # Extraemos los IDs que guardamos de fondo en las opciones del Combobox
     id_marca = combos['marca_ids'][combos['marca'].current()]
     id_capacidad = combos['cap_ids'][combos['capacidad'].current()]
@@ -87,6 +110,7 @@ def procesar_baja(tree):
     id_producto = item['values'][0]
 
     confirmar = messagebox.askyesno("Confirmar Baja", f"Estas seguro en dar de baja el producto ID: {id_producto}")
+
     if confirmar:
         exito, msj = dar_baja_logica_producto(id_producto)
         if exito:
@@ -94,6 +118,23 @@ def procesar_baja(tree):
             actualizar_grilla_productos(tree)
         else:
             messagebox.showerror("Error", msj)
+
+def procesar_reactivacion_masiva(tree):
+    """
+    Modo de prueba para dar alta logica a las bajas generadas
+    """
+
+    confirmar = messagebox.askyesno(
+        "Modo Prueba",
+        "Estas seguro que desea dar de alta TODOS los productos dados de baja en la base de datos?"
+    )
+    if confirmar:
+        cantidad = reactivar_todos_los_productos()
+        if cantidad > 0:
+            messagebox.showinfo("Exito", f"Se han recuperado {cantidad} productos inactivos")
+            actualizar_grilla_productos(tree)
+        else:
+            messagebox.showinfo("Informacion", "No habia productos dados de baja para recuperar")
 
 def mostrar_ventana_productos(ventana_padre):
     """
@@ -189,6 +230,14 @@ def mostrar_ventana_productos(ventana_padre):
         command=lambda: procesar_baja(tree_prod)
     )
     boton_baja.pack(fill=tk.X, padx=15, pady=10)
+
+    # Boton de Recuperar Todo
+    boton_recuperar = tk.Button(
+        ventana, text="Restaurar TODOS los productos inactivo",
+        bg="#FF9800", fg="white",
+        command=lambda: procesar_reactivacion_masiva(tree_prod)
+    )
+    boton_recuperar.pack(fill=tk.X, padx=15, pady=(0, 10))
 
     # Cargar datos en la grilla
     actualizar_grilla_productos(tree_prod)

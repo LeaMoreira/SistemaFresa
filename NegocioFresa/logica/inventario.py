@@ -212,3 +212,60 @@ def reactivar_producto(id_producto):
         return False, f"Error al reactivar: {str(e)}"
     finally:
         conexion.close()
+
+def verificar_estado_producto(id_producto):
+    """
+    Consulta si un producto existe en la base de datos
+    Retorna 1 (activo), 0 (inactivo) o None (no existe)
+    """
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT estado FROM productos WHERE id_productos = ?", (str(id_producto).strip(),))
+    resultado = cursor.fetchone()
+    conexion.close()
+
+    if resultado:
+        # dict(resultado) convierte la fila de SQLite para acceder por clave
+        return dict(resultado)['estado']
+    return None
+
+def reactivar_producto_individual(id_producto, nuevo_stock):
+    """
+    Revierte la baja de un producto y le asigna el nuevo stock ingresado
+    """
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+
+    try:
+        cursor.execute(
+            "UPDATE productos SET estado = 1, stock_actual = ? WHERE id_producto = ?",
+            (int(nuevo_stock), str(id_producto).strip())
+        )
+        conexion.commit()
+        return True
+    except Exception:
+        return False
+    finally:
+        conexion.close()
+
+def reactivar_todos_los_productos():
+    """
+    Solo para Pruebas:
+        Pasa todos los productos con baja logica (0) a activos (1)
+        retorna la cantidad de filas afectadas
+    """
+
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+
+    try:
+        cursor.execute("UPDATE productos SET estado = 1 WHERE estado = 0")
+        filas_afectadas = cursor.rowcount
+        conexion.commit()
+        return filas_afectadas
+    except Exception:
+        return 0 
+    finally:
+        conexion.close()
