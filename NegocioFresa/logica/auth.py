@@ -19,7 +19,7 @@ def validar_credenciales(usuario, password):
     cursor = conexion.cursor()
 
     # 3 Consultamos si existe ese usuario con esa clave exacta y que no este dado de baja
-    cursor.execute("SELECT id, usuario FROM usuarios WHERE usuario = ? AND password = ? AND estado = 1",
+    cursor.execute("SELECT id, usuario FROM usuarios WHERE usuario = ? AND password_hash = ? AND estado = 1",
                    (usuario, password_hash)
     )
 
