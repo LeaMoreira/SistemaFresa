@@ -145,36 +145,40 @@ def listar_producto():
     conexion.close()
     return resultados
 
-def modificar_precio_y_stock(id_producto, nuevo_precio_compra, nuevo_precio_venta, stock_reposicion):
+def modificar_producto_completo(id_producto, id_marca, id_capacidad, p_compra, p_venta,
+                                stock_actual, stock_minimo):
     """
-    P3.2 / RF6 y RF7 Modificar precios de compra/venta de forma independiente
-    y permite reponer stock sumando la cantidad ingresada al inventario actual
+    P3.2 / RF6 y RF7: Actualiza todos los campos de un producto existente
+    Sobreescribe los valores actuales con los nuevos campos ingresados en el formulario
     """
 
     conexion = obtener_conexion()
     cursor = conexion.cursor()
 
     try:
-        query = """
-            UPDATE productos
-            SET precio_compra = ?,
-                precio_venta = ?,
-                stock_actual = stock_acutal + ?
-            WHERE id_productos = ? AND estado = 1
-        """
-
+        query = '''
+                UPDATE productos
+                SET id_marca = ?,
+                    id_capacidad = ?,
+                    precio_compra = ?,
+                    precio_venta = ?,
+                    stock_actual = ?,
+                    stock_minimo = ?
+                WHERE id_producto = ? AND estado = 1
+        '''
         cursor.execute(query, (
-            float(nuevo_precio_compra),
-            float(nuevo_precio_venta),
-            int(stock_reposicion),
-            str(id_producto)
-            )
-        )
-
+                int(id_marca),
+                int(id_capacidad),
+                float(p_compra),
+                float(p_venta),
+                int(stock_actual),
+                int(stock_minimo),
+                str(id_producto).strip()
+        ))
         conexion.commit()
-        return True, "Producto actualizado correctamente"
+        return True, "Producto actualizado correctamente en la base de datos"
     except Exception as e:
-        return False, f"Error al alcuatlizar producto: {str(e)}"
+        return False, f"ERROR al actualizar producto: {str(e)}"
     finally:
         conexion.close()
 
@@ -221,7 +225,7 @@ def verificar_estado_producto(id_producto):
 
     conexion = obtener_conexion()
     cursor = conexion.cursor()
-    cursor.execute("SELECT estado FROM productos WHERE id_productos = ?", (str(id_producto).strip(),))
+    cursor.execute("SELECT estado FROM productos WHERE id_producto = ?", (str(id_producto).strip(),))
     resultado = cursor.fetchone()
     conexion.close()
 

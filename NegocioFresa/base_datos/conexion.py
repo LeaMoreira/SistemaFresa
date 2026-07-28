@@ -80,28 +80,34 @@ def inicializar_base_datos():
                 FOREIGN KEY(id_capacidad) REFERENCES capacidades (id)
             );
     ''')
-
-    # D5 Archivo Venta (cabecera y detalle)
+    # TABLA DE VENTAS (CORREGIDAD)
     cursor.execute('''
-            CREATE TABLE IF NOT EXISTS ventas(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-                total REAL NO NULL,
-                id_usuario INTEGER NOT NULL,
-                FOREIGN KEY(id_usuario) REFERENCES usuarios(id)
-            )
-    ''')
-    
-    cursor.execute('''
-            CREATE TABLE IF NOT EXISTS detalle_venta(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                id_venta INTEGER NOT NULL,
-                codigo_producto TEXT NOT NULL,
-                cantidad INTEGER NOT NULL,
+            CREATE TABLE IF NOT EXISTS ventas (
+                id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
+                metodo_pago TEXT NOT NULL,
                 subtotal REAL NOT NULL,
-                FOREIGN KEY(id_venta) REFERENCES ventas(id),
-                FOREIGN KEY(codigo_producto) REFERENCES productos(codigo_barras)
-            )
+                impuestos_comisiones REAL DEFAULT 0.0,
+                total_final REAL NOT NULL,
+                id_usuario INTEGER DEFAULT 1,
+                estado INTEGER DEFAULT 1,
+                FOREIGN KEY(id_usuario) REFERENCES usuarios(id)
+            );
+    ''')
+    # DETALLE DE VENTAS (CORREGIDA)
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS detalle_venta (
+                id_detalle INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_venta INTEGER NOT NULL,
+                id_producto TEXT,
+                descripcion_linea TEXT NOT NULL,
+                cantidad INTEGER NOT NULL,
+                precio_unitario REAL NOT NULL,
+                subtotal_linea REAL NOT NULL,
+                tipo_linea TEXT DEFAULT 'PRODUCTO',
+                FOREIGN KEY(id_venta) REFERENCES ventas(id_venta),
+                FOREIGN KEY(id_producto) REFERENCES productos(id_producto)
+            );
     ''')
 
     # INYECCION DE ADMINISTRADOR INICIAL RF-1
