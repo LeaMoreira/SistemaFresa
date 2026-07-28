@@ -6,6 +6,7 @@ tiene botones aun inactivos
 import tkinter as tk
 from vistas.ventana_inventario import mostrar_ventana_parametros
 from vistas.ventana_producto import mostrar_ventana_productos
+from vistas.ventana_ventas import abrir_modulo_ventas
 
 def mostrar_menu_principal(usuario_actual):
     """
@@ -14,7 +15,7 @@ def mostrar_menu_principal(usuario_actual):
     """
 
     ventana = tk.Tk()
-    ventana.title(f"Negocio Fresaa - Panel de Control (Usuario: {usuario_actual['usuario']})")
+    ventana.title(f"Negocio Fresa - Panel de Control (Usuario: {usuario_actual['usuario']})")
     ventana.geometry("600x400")
     ventana.resizable(False, False)
 
@@ -36,7 +37,8 @@ def mostrar_menu_principal(usuario_actual):
     tk.Button(marco_botones, text="3. Promociones",
             width=25, height=2).grid(row=1, column=0, padx=10, pady=10)
     tk.Button(marco_botones, text="4. Ventas",
-            width=25, height=2).grid(row=1, column=1, padx=10, pady=10)
+            width=25, height=2,
+            command=lambda: abrir_modulo_ventas(ventana)).grid(row=1, column=1, padx=10, pady=10)
     tk.Button(marco_botones, text="5. Reportes",
             width=25, height=2).grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 

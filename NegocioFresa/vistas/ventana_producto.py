@@ -13,7 +13,8 @@ from logica.inventario import (
     registrar_producto, listar_producto,
     listar_marcas, listar_capacidades,
     dar_baja_logica_producto, verificar_estado_producto,
-    reactivar_producto_individual, reactivar_todos_los_productos
+    reactivar_producto_individual, reactivar_todos_los_productos,
+    modificar_producto_completo
 )
 
 def actualizar_grilla_productos(tree):
@@ -35,6 +36,37 @@ def actualizar_grilla_productos(tree):
             p['stock_minimo']
             )
         )
+
+def cargar_datos_para_edicion(event, tree, entries, combos):
+    """
+    Captura el doble clic en la grilla y sube los datos al formulario
+    para poder ser modificados
+    """
+
+    seleccion = tree.selection()
+    if not seleccion:
+        return
+
+    item = tree.item(seleccion[0])
+    valores = item['values'] # aca obtenemos todos los datos de un producto
+
+    # 1 Limpiamos los campos
+    for e in entries.values():
+        e.delete(0, tk.END)
+
+    # 2 Cargamos los datos crudos
+    entries['id'].insert(0, valores[0])
+    combos['marca'].set(valores[1])
+    combos['capacidad'].set(valores[2])
+    entries['stock'].insert(0, valores[5])
+    entries['stock_min'].insert(0, valores[6])
+
+    # 3 Limpiamos los simbolos de moneda de precios antes de subirlo
+    p_compra_limpio = str(valores[3]).replace('$', '')
+    p_venta_limpio = str(valores[4]).replace('$', '')
+
+    entries['p_compra'].insert(0, p_compra_limpio)
+    entries['p_venta'].insert(0, p_venta_limpio)
 
 def guardar_producto(entries, combos, tree):
     """
@@ -74,7 +106,26 @@ def guardar_producto(entries, combos, tree):
         return # Se corta la ejecucion aca
     elif estado_actual == 1:
         # El producto existe y esta activo
-        messagebox.showerror("Error", "El Codigo/ID de producto ya existe y esta activo en el sistema")
+        respuesta = messagebox.askyesno(
+            "Producto Existente",
+            "Este codigo ya esta registrado en el sistema.\nDesea Actualizar sus datos?"
+        )
+        if respuesta:
+            # Usamos la nueva funcion del inventario aca
+            id_marca = combos['marca_ids'][combos['marca'].current()]
+            id_capacidad = combos['cap_ids'][combos['capacidad'].current()]
+
+            exito, msj = modificar_producto_completo(id_p, id_marca, id_capacidad, 
+                                                    p_compra, p_venta, stock, s_min)
+
+            if exito:
+                messagebox.showinfo("Actualizado", msj)
+                for e in entries.values():
+                    e.delete(0, tk.END)
+                actualizar_grilla_productos(tree)
+                entries['id'].focus()
+            else:
+                messagebox.showerror("ERROR", msj)
         return
 
     # Extraemos los IDs que guardamos de fondo en las opciones del Combobox
@@ -212,6 +263,8 @@ def mostrar_ventana_productos(ventana_padre):
     cols = ("ID", "Marca", "Capacidad", "P. Compra", "P. Venta", "Stock", "Stock Min")
     tree_prod = ttk.Treeview(frame_tabla, columns=cols, show="headings", height=10)
 
+    # Evento doble clic
+    tree_prod.bind("<Double-1>", lambda event: cargar_datos_para_edicion(event, tree_prod, entries, combos))
     for col in cols:
         tree_prod.heading(col, text=col)
         tree_prod.column(col, width=100, anchor="center")
