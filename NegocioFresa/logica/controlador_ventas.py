@@ -6,6 +6,7 @@ para la venta en el negocio
 import tkinter as tk
 from tkinter import messagebox
 from base_datos.conexion import obtener_conexion
+from logica.ventas import registrar_venta_transaccion
 
 # Variable global a nivel de módulo para mantener el estado del carrito activo
 carrito_actual = []
@@ -23,6 +24,7 @@ def configurar_eventos_ventas(widgets):
     # Acciones de Botones
     boton_eliminar = widgets["boton_eliminar"]
     boton_cancelar = widgets["boton_cancelar"]
+    boton_cobrar = widgets["boton_cobrar"]
 
     def agregar_al_carrito(id_prod, descripcion, precio_unitario):
         """
@@ -269,6 +271,68 @@ def configurar_eventos_ventas(widgets):
             lista_sugerencias.focus_set()
             lista_sugerencias.selection_set(0)
 
+    def procesar_cobro(event=None):
+        """
+        lee el carrito, valida y manda a guardar las transaccion
+        """
+
+        # 1 Valida que el carrito no este vacio
+        items_carrito = tree_carrito.get_children()
+        if not items_carrito:
+            messagebox.showwarning("Carrito Vacio", "No hay productos para conbrar")
+            return
+
+        # 2 Armar lista de diccionario leyendo el Treeview
+        carrito_para_bd = []
+        total_final = 0.0
+
+        for item in tree_carrito.get_children():
+            valores = tree_carrito.item(item)['values']
+
+            # Las columnas del treeview 0=codigo, 1=desc, 2=cant, 3=precio, 4=subtotal
+            codigo = str(valores[0]).strip()
+            descripcion = str(valores[1]).strip()
+            cantidad = int(valores[2])
+
+            # Limpiamos simbolos de monedas
+            precio = float(str(valores[3]).replace('$', '').strip())
+            subtotal = float(str(valores[4]).replace('$', '').strip())
+
+            carrito_para_bd.append({
+                'id': codigo,
+                'desc': descripcion,
+                'cant': cantidad,
+                'precio': precio,
+                'subtotal': subtotal
+            })
+            total_final += subtotal
+
+            # 3 Guardamos la transaccion en SQLite
+            exito, mensaje = registrar_venta_transaccion(
+                carrito=carrito_para_bd,
+                metodo_pago="Efectivo",
+                subtotal=total_final,
+                impuestos=0.0,
+                total_final=total_final
+            )
+
+            # 4 Limpiamos si es exitoso
+            if exito:
+                messagebox.showinfo("Venta Exitosa", mensaje)
+
+                # Limpia la tabla treeview
+                for item in tree_carrito.get_children():
+                    tree_carrito.delete(item)
+
+                # Limpia lista de memora y resetea el total a 0
+                carrito_actual.clear()
+                actualizar_total_visual()
+
+                # Devolvemos el cursor al buscador para el siguiente producto
+                entry_busqueda.focus()
+            else:
+                messagebox.showerror("ERROR", mensaje)
+            
     # -- ASIGNACION DE EVENTOS BIND (Ahora sí están al nivel correcto para ejecutarse al abrir la ventana) --
     entry_busqueda.bind("<KeyRelease>", al_teclear_busqueda)
     
@@ -285,7 +349,9 @@ def configurar_eventos_ventas(widgets):
     # Tecla especiales de Treeview
     tree_carrito.bind("<Escape>", cancelar_venta)
     tree_carrito.bind("<Delete>", eliminar_item)
+    tree_carrito.winfo_toplevel().bind("<F12>", procesar_cobro)
 
     # Asignacion de Command (clics en los botones)
     boton_cancelar.config(command=cancelar_venta)
     boton_eliminar.config(command=eliminar_item)
+    boton_cobrar.config(command=procesar_cobro)
