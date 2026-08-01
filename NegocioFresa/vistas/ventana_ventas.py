@@ -22,8 +22,7 @@ def crear_vista_ventas(frame_padre):
 
     # Estilo de letra en treeview
     style = ttk.Style()
-    style.configure("Treeview", font=("Arial", 15))
-    style.configure("Treeview.Heading", font=("Arial", 15))
+    style.configure("Treeview", font=("Arial", 10))
 
     # 1 Tabla del carrito
     columnas = ("codigo", "descripcion", "cantidad", "precio", "subtotal")

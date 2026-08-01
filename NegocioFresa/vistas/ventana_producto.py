@@ -194,8 +194,7 @@ def mostrar_ventana_productos(ventana_padre):
 
     ventana = tk.Toplevel(ventana_padre)
     ventana.title("Gestion de Productos e Inventario")
-    ventana.geometry("850x550")
-    ventana.resizable(False, False)
+    ventana.geometry("900x600")
 
     # Formulario de Alta
     frame_form = tk.LabelFrame(ventana, text="Alta/Registro de Producto", padx=10, pady=10)
@@ -265,9 +264,22 @@ def mostrar_ventana_productos(ventana_padre):
 
     # Evento doble clic
     tree_prod.bind("<Double-1>", lambda event: cargar_datos_para_edicion(event, tree_prod, entries, combos))
-    for col in cols:
-        tree_prod.heading(col, text=col)
-        tree_prod.column(col, width=100, anchor="center")
+
+    tree_prod.heading("ID", text="ID Producto")
+    tree_prod.heading("Marca", text="Marca")
+    tree_prod.heading("Capacidad", text="Capacidad")
+    tree_prod.heading("P. Compra", text="Precio Compra")
+    tree_prod.heading("P. Venta", text="Precio Venta")
+    tree_prod.heading("Stock", text="Stock")
+    tree_prod.heading("Stock Min", text="Stock Mínimo")
+
+    tree_prod.column("ID", width=120)
+    tree_prod.column("Marca", width=350)
+    tree_prod.column("Capacidad", width=50)
+    tree_prod.column("P. Compra", width=50, anchor=tk.CENTER)
+    tree_prod.column("P. Venta", width=50, anchor=tk.CENTER)
+    tree_prod.column("Stock", width=50, anchor=tk.CENTER)
+    tree_prod.column("Stock Min", width=50, anchor=tk.CENTER)
 
     tree_prod.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
