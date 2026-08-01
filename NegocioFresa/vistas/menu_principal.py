@@ -7,6 +7,7 @@ import tkinter as tk
 from vistas.ventana_inventario import mostrar_ventana_parametros
 from vistas.ventana_producto import mostrar_ventana_productos
 from vistas.ventana_ventas import abrir_modulo_ventas
+from vistas.ventana_promociones import mostrar_ventana_promociones
 
 def mostrar_menu_principal(usuario_actual):
     """
@@ -35,7 +36,8 @@ def mostrar_menu_principal(usuario_actual):
                 width=25, height=2,
                 command=lambda: mostrar_ventana_productos(ventana)).grid(row=0, column=1, padx=10, pady=10)
     tk.Button(marco_botones, text="3. Promociones",
-            width=25, height=2).grid(row=1, column=0, padx=10, pady=10)
+            width=25, height=2,
+            command=lambda: mostrar_ventana_promociones(ventana)).grid(row=1, column=0, padx=10, pady=10)
     tk.Button(marco_botones, text="4. Ventas",
             width=25, height=2,
             command=lambda: abrir_modulo_ventas(ventana)).grid(row=1, column=1, padx=10, pady=10)

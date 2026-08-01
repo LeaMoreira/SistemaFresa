@@ -60,8 +60,11 @@ def inicializar_base_datos():
             CREATE TABLE IF NOT EXISTS promociones(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT NOT NULL UNIQUE,
-                descuento REAL DEFAULT 0,
-                estado INTEGER DEFAULT 1
+                id_producto INTEGER NOT NULL,
+                cantidad_requerida INTEGER NOT NULL,
+                precio_promo REAL NOT NULL,
+                estado INTEGER DEFAULT 1,
+                FOREIGN KEY (id_producto) REFERENCES productos(codigo)
             )
     ''')
 
