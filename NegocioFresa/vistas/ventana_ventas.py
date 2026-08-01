@@ -20,6 +20,11 @@ def crear_vista_ventas(frame_padre):
     panel_izquierdo = ttk.Frame(frame_principal)
     panel_izquierdo.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
 
+    # Estilo de letra en treeview
+    style = ttk.Style()
+    style.configure("Treeview", font=("Arial", 15))
+    style.configure("Treeview.Heading", font=("Arial", 15))
+
     # 1 Tabla del carrito
     columnas = ("codigo", "descripcion", "cantidad", "precio", "subtotal")
     tree_carrito = ttk.Treeview(panel_izquierdo, columns=columnas, show="headings", height=15)
@@ -30,9 +35,9 @@ def crear_vista_ventas(frame_padre):
     tree_carrito.heading("precio", text="P. Unit")
     tree_carrito.heading("subtotal", text="Subtotal")
 
-    tree_carrito.column("codigo", width=100)
-    tree_carrito.column("descripcion", width=250)
-    tree_carrito.column("cantidad", width=50, anchor=tk.CENTER)
+    tree_carrito.column("codigo", width=50)
+    tree_carrito.column("descripcion", width=325)
+    tree_carrito.column("cantidad", width=25, anchor=tk.CENTER)
     tree_carrito.column("precio", width=80, anchor=tk.E)
     tree_carrito.column("subtotal", width=90, anchor=tk.E)
 
