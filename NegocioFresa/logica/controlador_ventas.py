@@ -4,10 +4,10 @@ para la venta en el negocio
 """
 
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 from base_datos.conexion import obtener_conexion
 from logica.ventas import registrar_venta_transaccion
-
+from vistas.ventana_ventas import crear_modal_cobro
 # Variable global a nivel de módulo para mantener el estado del carrito activo
 carrito_actual = []
 
@@ -29,55 +29,91 @@ def configurar_eventos_ventas(widgets):
     def agregar_al_carrito(id_prod, descripcion, precio_unitario):
         """
         Verifica si el producto ya esta en el carrito
-        Si esta, suma en 1 a la cantidad y recalcula el subtotal
-        Si no, lo agrega a un nuevo renglon
+        si esta, suma en 1 la cantidad y recalcula el subtotal (aplica promos si es necesario)
+        Si no lo agrega en un nuevo renglon
         """
 
-        precio_unitario = float(precio_unitario)
+        precio_unitario = float(precio_unitario)  # Aseguramos que sea float
 
-        # 1 Buscamos si el producto ya existe en nuestra logica
+        # Funcion para calcular promociones
+        def calcular_subtotal(cantidad_actual):
+            conexion = obtener_conexion()
+            cursor = conexion.cursor()
+            try:
+                # Buscamos si este producto tiene promocion activa
+                cursor.execute('''
+                    SELECT cantidad_requerida, precio_promo
+                    FROM promociones
+                    WHERE id_producto = ? AND estado = 1
+                ''', (id_prod,))
+                promo = cursor.fetchone()
+
+                if promo:
+                    cant_req = promo['cantidad_requerida']
+                    precio_promo = promo['precio_promo']
+
+                    # calculamos las ofertas
+                    paquetes_prmo = cantidad_actual // cant_req
+                    unidades_sueltas = cantidad_actual % cant_req
+
+                    return (paquetes_prmo * precio_promo) + (unidades_sueltas * precio_unitario)
+                else:
+                    return cantidad_actual * precio_unitario
+            except Exception as e:
+                print(f"Error al calcular promociones: {e}")
+                return cantidad_actual * precio_unitario
+            finally:
+                conexion.close()
+
+        # 1 Buscamos si el producto existe en nuestra BD
         for item in carrito_actual:
             if item['id_producto'] == id_prod:
-                # Actualizamos la suma
+                # Si existe, aumentamos la cantidad y recalculamos el subtotal
                 item['cantidad'] += 1
-                item['subtotal_linea'] = item['cantidad'] * item['precio_unitario']
 
-                # Buscamos el renglon exacto en la tabla para actualizar
+                # Llamamos a la función para calcular el subtotal considerando promociones
+                item['subtotal_linea'] = calcular_subtotal(item['cantidad'])
+
+                # buscamos el renglon exacto en la tabla para actualizar
                 for child in tree_carrito.get_children():
                     valores_fila = tree_carrito.item(child, "values")
                     if str(valores_fila[0]) == str(id_prod):
-                        # Actualizamos la fila mostrando Precio y Subtotal correctamente
+                        # Actualizamos la fila mostrando el precio y subtotal correctamente
                         tree_carrito.item(child, values=(
                             id_prod,
                             descripcion,
                             item['cantidad'],
                             f"${precio_unitario:.2f}",
                             f"${item['subtotal_linea']:.2f}"
-                        ))
+                            )
+                        )
                         break
 
                 actualizar_total_visual()
-                return # Aca se corta la funcion si ya se sumo
+                return  # Salimos de la función ya que actualizamos el producto existente
 
-        # 2 Si el bucle termino y no encontro le producto, lo creamos de cero
+        # 2 si el bucle termino y no encontro el producto lo creamos de cero
+        subtotal_inicial = calcular_subtotal(1)
+
         nuevo_item = {
             'id_producto': id_prod,
             'descripcion': descripcion,
             'cantidad': 1,
             'precio_unitario': precio_unitario,
-            'subtotal_linea': precio_unitario,
+            'subtotal_linea': subtotal_inicial,
             'tipo_linea': 'PRODUCTO'
         }
         carrito_actual.append(nuevo_item)
 
-        # Insertamos el renglon nuevo Precio y Subtotal arrancan iguales
-        tree_carrito.insert("", tk.END, values=(
+        # Insertamos el nuevo renglon en el treeview
+        tree_carrito.insert('', tk.END, values=(
             id_prod,
             descripcion,
             1,
             f"${precio_unitario:.2f}",
-            f"${precio_unitario:.2f}"
+            f"${subtotal_inicial:.2f}"
         ))
+
         actualizar_total_visual()
 
     def actualizar_total_visual():
@@ -273,28 +309,21 @@ def configurar_eventos_ventas(widgets):
 
     def procesar_cobro(event=None):
         """
-        lee el carrito, valida y manda a guardar las transaccion
+        Controlador: Lee el carrito, valida y abre la vista del modal
         """
-
-        # 1 Valida que el carrito no este vacio
         items_carrito = tree_carrito.get_children()
         if not items_carrito:
-            messagebox.showwarning("Carrito Vacio", "No hay productos para conbrar")
+            messagebox.showwarning("Carrito Vacio", "No hay productos para cobrar")
             return
 
-        # 2 Armar lista de diccionario leyendo el Treeview
         carrito_para_bd = []
         total_final = 0.0
 
         for item in tree_carrito.get_children():
             valores = tree_carrito.item(item)['values']
-
-            # Las columnas del treeview 0=codigo, 1=desc, 2=cant, 3=precio, 4=subtotal
             codigo = str(valores[0]).strip()
             descripcion = str(valores[1]).strip()
             cantidad = int(valores[2])
-
-            # Limpiamos simbolos de monedas
             precio = float(str(valores[3]).replace('$', '').strip())
             subtotal = float(str(valores[4]).replace('$', '').strip())
 
@@ -307,31 +336,34 @@ def configurar_eventos_ventas(widgets):
             })
             total_final += subtotal
 
-            # 3 Guardamos la transaccion en SQLite
+        # --- CALLBACK: Función que el modal llamará al apretar 'Confirmar' ---
+        def confirmar_venta_logica(metodo_elegido, monto_recargo, total_calculado):
             exito, mensaje = registrar_venta_transaccion(
                 carrito=carrito_para_bd,
-                metodo_pago="Efectivo",
+                metodo_pago=metodo_elegido,
                 subtotal=total_final,
-                impuestos=0.0,
-                total_final=total_final
+                impuestos=monto_recargo,
+                total_final=total_calculado,
+                id_usuario=1 
             )
 
-            # 4 Limpiamos si es exitoso
             if exito:
                 messagebox.showinfo("Venta Exitosa", mensaje)
-
-                # Limpia la tabla treeview
+                
+                # Limpiar la vista principal
                 for item in tree_carrito.get_children():
                     tree_carrito.delete(item)
-
-                # Limpia lista de memora y resetea el total a 0
-                carrito_actual.clear()
-                actualizar_total_visual()
-
-                # Devolvemos el cursor al buscador para el siguiente producto
+                
+                carrito_actual.clear() 
+                actualizar_total_visual() 
                 entry_busqueda.focus()
+                return True # Le avisa al modal que cierre
             else:
-                messagebox.showerror("ERROR", mensaje)
+                messagebox.showerror("Error", mensaje)
+                return False # Le avisa al modal que NO cierre por un error en BD
+
+        # Llamamos a la vista pasando el parent, el subtotal y el callback
+        crear_modal_cobro(tree_carrito.winfo_toplevel(), total_final, confirmar_venta_logica)
             
     # -- ASIGNACION DE EVENTOS BIND (Ahora sí están al nivel correcto para ejecutarse al abrir la ventana) --
     entry_busqueda.bind("<KeyRelease>", al_teclear_busqueda)
