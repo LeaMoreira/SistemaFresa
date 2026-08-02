@@ -8,6 +8,7 @@ from vistas.ventana_inventario import mostrar_ventana_parametros
 from vistas.ventana_producto import mostrar_ventana_productos
 from vistas.ventana_ventas import abrir_modulo_ventas
 from vistas.ventana_promociones import mostrar_ventana_promociones
+from vistas.ventana_reportes import crear_ventana_reportes
 
 def mostrar_menu_principal(usuario_actual):
     """
@@ -42,6 +43,7 @@ def mostrar_menu_principal(usuario_actual):
             width=25, height=2,
             command=lambda: abrir_modulo_ventas(ventana)).grid(row=1, column=1, padx=10, pady=10)
     tk.Button(marco_botones, text="5. Reportes",
-            width=25, height=2).grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+            width=25, height=2,
+            command=lambda: crear_ventana_reportes(ventana)).grid(row=2, column=0, columnspan=2, padx=10, pady=10)
 
     ventana.mainloop()

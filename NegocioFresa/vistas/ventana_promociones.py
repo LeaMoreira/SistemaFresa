@@ -1,10 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from logica.promociones import (
-    obtener_promociones_activas, 
+    obtener_todas_promociones, 
     agregar_promocion, 
     actualizar_promocion, 
-    eliminar_promocion_logica
+    cambiar_estado_promocion_bd
 )
 from logica.inventario import listar_producto
 
@@ -15,14 +15,16 @@ def actualizar_grilla_promociones(tree):
     for item in tree.get_children():
         tree.delete(item)
 
-    for p in obtener_promociones_activas():
+    for p in obtener_todas_promociones():
+        texto_estado = "Alta" if p['estado'] == 1 else "Inactiva"
         tree.insert("", tk.END, values=(
             p['id'],
             p['nombre_promo'],
             p['id_producto'],
             p['descripcion_producto'],
             p['cantidad_requerida'],
-            f"${p['precio_promo']:.2f}"
+            f"${p['precio_promo']:.2f}",
+            texto_estado
         ))
 
 def cargar_datos_para_edicion_promo(event, tree, entries, combos):
@@ -119,23 +121,30 @@ def guardar_promocion(entries, combos, tree):
     else:
         messagebox.showerror("Error", mensaje)
 
-def procesar_baja_promo(tree, entries, combos):
+def procesar_cambio_estado(tree, entries, combos):
     """
-    Función para baja lógica por selección de tabla treeview
+    Función para alternar entre Alta y Baja lógica
     """
     seleccion = tree.selection()
     if not seleccion:
-        messagebox.showwarning("Atención", "Seleccione una promoción de la tabla para dar de baja")
+        messagebox.showwarning("Atención", "Seleccione una promoción de la tabla")
         return
 
     item = tree.item(seleccion[0])
-    id_promo = item['values'][0]
-    nombre_promo = item['values'][1]
+    valores = item['values']
+    
+    id_promo = valores[0]
+    nombre_promo = valores[1]
+    estado_actual = valores[6] # El índice 6 es la nueva columna "Estado"
 
-    confirmar = messagebox.askyesno("Confirmar Baja", f"¿Estás seguro de dar de baja la promoción '{nombre_promo}'?")
+    # Si está activa la damos de baja (0), si está inactiva la damos de alta (1)
+    nuevo_estado = 0 if estado_actual == "Activa" else 1
+    palabra_accion = "dar de baja" if nuevo_estado == 0 else "dar de ALTA"
+
+    confirmar = messagebox.askyesno("Confirmar", f"¿Estás seguro de {palabra_accion} la promoción '{nombre_promo}'?")
 
     if confirmar:
-        exito, msj = eliminar_promocion_logica(id_promo)
+        exito, msj = cambiar_estado_promocion_bd(id_promo, nuevo_estado)
         if exito:
             messagebox.showinfo("Éxito", msj)
             limpiar_formulario_promo(entries, combos)
@@ -223,14 +232,14 @@ def mostrar_ventana_promociones(ventana_padre):
     frame_tabla = tk.Frame(ventana)
     frame_tabla.pack(fill=tk.BOTH, expand=True, padx=15, pady=5)
 
-    cols = ("ID", "Nombre Promo", "Cod Producto", "Producto", "Lleva", "Precio Total")
+    cols = ("ID", "Nombre Promo", "Cod Producto", "Producto", "Lleva", "Precio Total", "Estado")
     tree_promo = ttk.Treeview(frame_tabla, columns=cols, show="headings", height=10)
 
     # Evento doble clic
     tree_promo.bind("<Double-1>", lambda event: cargar_datos_para_edicion_promo(event, tree_promo, entries, combos))
     
     # Anchos personalizados para que se vea lindo
-    anchos = [40, 150, 100, 200, 80, 100]
+    anchos = [40, 150, 100, 200, 80, 100, 80]
     for col, ancho in zip(cols, anchos):
         tree_promo.heading(col, text=col)
         tree_promo.column(col, width=ancho, anchor="center")
@@ -243,12 +252,12 @@ def mostrar_ventana_promociones(ventana_padre):
     scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
     # Botón Baja Lógica
-    boton_baja = tk.Button(
-        ventana, text="Dar de Baja Promoción Seleccionada",
-        bg="#f44336", fg="white", font=("Arial", 9, "bold"),
-        command=lambda: procesar_baja_promo(tree_promo, entries, combos)
+    boton_estado = tk.Button(
+        ventana, text="Cambiar Estado Promoción Seleccionada",
+        bg="#ff9800", fg="white", font=("Arial", 9, "bold"),
+        command=lambda: procesar_cambio_estado(tree_promo, entries, combos)
     )
-    boton_baja.pack(fill=tk.X, padx=15, pady=(10, 15))
+    boton_estado.pack(fill=tk.X, padx=15, pady=(10, 15))
 
     # Cargar datos iniciales en la grilla
     actualizar_grilla_promociones(tree_promo)

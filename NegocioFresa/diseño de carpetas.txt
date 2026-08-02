@@ -8,16 +8,18 @@ NegocioFresa/
 │
 ├── logica/                  # Los procesos de tu DFD Nivel 1 (El cerebro)
 │   ├── auth.py              # (P1) Validar credenciales
+│   ├── controlador_ventas.py# (P5) Descontar stock y registrar venta
 │   ├── inventario.py        # (P2 y P3) Gestionar parámetros y productos
 │   ├── promociones.py       # (P4) Configurar promociones
-│   ├── ventas.py            # (P5) Descontar stock y registrar venta
 │   └── reportes.py          # (P6) Alertas y balances
 │
 ├── vistas/                  # Las pantallas (Interfaz Gráfica con Tkinter)
-│   ├── ventana_login.py
-│   ├── ventana_principal.py
-│   ├── ventana_ventas.py
-│   └── ventana_inventario.py
+│   ├── login.py
+│   ├── menu_principal.py
+│   ├── ventana_inventario.py
+│   ├── ventana_producto.py
+│   ├── ventana_promociones.py
+│   └── ventana_ventas.py
 │
 └── recursos/                # Archivos estáticos
     └── logo_fresa.png       # Imágenes, íconos, etc.
