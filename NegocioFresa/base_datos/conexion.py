@@ -7,9 +7,18 @@ import sqlite3
 import os
 import hashlib
 
-# Definimos la ruta absoluta para que SQLite no cree el archivo en otro lado por error
-DIRECTORIO_ACTUAL = os.path.dirname(__file__)
-RUTA_BD = os.path.join(DIRECTORIO_ACTUAL, 'negocio_fresa.db')
+# 1 Pedimos a Windows la ruta de la carpeta AppData
+appdata_path = os.getenv('APPDATA')
+
+# 2 Definimos nuestra propia carpeta dentro de AppData
+directorio_db = os.path.join(appdata_path, 'NegocioFresa')
+
+# 3 Si la carpeta no existe al abrir por primera vez la creamos
+if not os.path.exists(directorio_db):
+    os.makedirs(directorio_db)
+
+# 4 Establecemos la ruta final del archivo
+RUTA_BD = os.path.join(directorio_db, 'negocio_fresa.db')
 
 def obtener_conexion():
     """

@@ -25,60 +25,77 @@ def crear_ventana_reportes(ventana_padre):
     notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
     # -- Pestaña de Balance Financiero
+    # =========================================================================
+    # PESTAÑA 1: BALANCE FINANCIERO Y RENTABILIDAD
+    # =========================================================================
     tab_balance = ttk.Frame(notebook)
     notebook.add(tab_balance, text="Balance Financiero")
 
-    # Controles superiores
+    # Controles superiores (Filtro)
     frame_filtros_1 = tk.Frame(tab_balance)
     frame_filtros_1.pack(fill=tk.X, padx=20, pady=15)
 
-    tk.Label(frame_filtros_1, text="Filtrar por:",
-            font=("Arial", 11)).pack(side=tk.LEFT, padx=(0, 10))
+    tk.Label(frame_filtros_1, text="Filtrar por:", font=("Arial", 11)).pack(side=tk.LEFT, padx=(0, 10))
 
-    combo_filtro_balance = ttk.Combobox(frame_filtros_1,
-                                        values=["Hoy", "Este Mes", "Historico"],
-                                        state="readonly", width=15)
+    combo_filtro_balance = ttk.Combobox(frame_filtros_1, values=["Hoy", "Este Mes", "Histórico"], state="readonly", width=15)
     combo_filtro_balance.set("Hoy")
     combo_filtro_balance.pack(side=tk.LEFT)
-    combo_filtro_balance.pack(side=tk.LEFT)
 
-    # Etiqueta de Gran Total
-    label_gran_total = tk.Label(tab_balance, text="RECAUDACION TOTAL: $0.00",
-                                font=("Arial", 16, "bold"), fg="#2E7D32")
-    label_gran_total.pack(pady=(0, 15))
+    # Panel de Totales (Tarjetas de resumen)
+    frame_totales = tk.Frame(tab_balance)
+    frame_totales.pack(fill=tk.X, padx=20, pady=(0, 15))
 
-    # Grilla de desglose
-    cols_balance = ("Metodo de Pago", "Cant. Operaciones", "Total Recaudado")
+    label_recaudado = tk.Label(frame_totales, text="RECAUDADO: $0.00", font=("Arial", 12, "bold"), fg="#1565C0")
+    label_recaudado.pack(side=tk.LEFT, expand=True)
+
+    label_costo = tk.Label(frame_totales, text="COSTO TOTAL: $0.00", font=("Arial", 12, "bold"), fg="#C62828")
+    label_costo.pack(side=tk.LEFT, expand=True)
+
+    label_ganancia = tk.Label(frame_totales, text="GANANCIA NETA: $0.00", font=("Arial", 14, "bold"), fg="#2E7D32")
+    label_ganancia.pack(side=tk.LEFT, expand=True)
+
+    # Grilla de desglose de rentabilidad
+    cols_balance = ("Cod", "Producto", "Costo U.", "Venta U.", "Cant", "Recaudado", "Costo Tot.", "Ganancia")
     tree_balance = ttk.Treeview(tab_balance, columns=cols_balance, show="headings", height=10)
-    for col in cols_balance:
+
+    # Ajuste de anchos para que entre bien en la pantalla
+    anchos_balance = [60, 200, 80, 80, 50, 90, 90, 90]
+    for col, ancho in zip(cols_balance, anchos_balance):
         tree_balance.heading(col, text=col)
-        tree_balance.column(col, anchor="center")
+        tree_balance.column(col, width=ancho, anchor="center")
+        
     tree_balance.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
 
     def actualizar_tab_balance(event=None):
-        # Mapea la seleccion visual de parametro
-        mapeo = {"Hoy": "hoy", "Este Mes": "mes", "Historico": "historico"}
+        # Mapeamos la selección visual al parámetro que espera el backend
+        mapeo = {"Hoy": "hoy", "Este Mes": "mes", "Histórico": "historico"}
         filtro_backend = mapeo.get(combo_filtro_balance.get(), "hoy")
-
+        
         datos = obtener_balance_ventas(filtro_backend)
-
-        # Actualiza etiqueta de total
-        label_gran_total.config(text=f"RECAUDACION TOTAL: ${datos['gran_total']:.2f}")
-
-        # Actualiza Grilla
+        
+        # Actualizamos las tres etiquetas de resumen con las nuevas claves
+        label_recaudado.config(text=f"RECAUDADO: ${datos['recaudado']:.2f}")
+        label_costo.config(text=f"COSTO TOTAL: ${datos['costo']:.2f}")
+        label_ganancia.config(text=f"GANANCIA NETA: ${datos['ganancia']:.2f}")
+        
+        # Limpiamos y actualizamos la grilla
         for item in tree_balance.get_children():
             tree_balance.delete(item)
-
-        for fila in datos['desglose']:
+            
+        for fila in datos['detalle']:
             tree_balance.insert("", tk.END, values=(
-                fila['metodo_pago'],
-                fila['cantidad_operaciones'],
-                f"${fila['total_recaudado']:.2f}"
+                fila['id_producto'],
+                fila['descripcion'],
+                f"${fila['costo_unitario']:.2f}",
+                f"${fila['venta_unitaria']:.2f}",
+                fila['cantidad_vendida'],
+                f"${fila['total_recaudado']:.2f}",
+                f"${fila['costo_total']:.2f}",
+                f"${fila['ganancia_bruta']:.2f}"
             ))
 
     combo_filtro_balance.bind("<<ComboboxSelected>>", actualizar_tab_balance)
-
-    # -- Pestaña Rotacion Productos Mas Vendidos
+# -- Pestaña Rotacion Productos Mas Vendidos
     tab_rotacion = ttk.Frame(notebook)
     notebook.add(tab_rotacion, text="Productos Mas Vendidos")
 
