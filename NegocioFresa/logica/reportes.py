@@ -18,36 +18,48 @@ def obtener_balance_ventas(filtro="historico"):
     # Preparamos la peticion de fecha segun lo que pida para ver
     condicion_fecha = ""
     if filtro == "hoy":
-        # Compara solo la parte de la fecha YYYY-MM-DD con la fecha actual de local
-        condicion_fecha = "AND DATE(fecha_hora, 'localtime') = DATE('now', 'localtime')"
+        condicion_fecha = "AND DATE(v.fecha_hora, 'localtime') = DATE('now', 'localtime')"
     elif filtro == "mes":
-        # Compara solo el mes y año con la fecha actual de local
-        condicion_fecha = "AND strftime('%Y-%m', fecha_hora, 'localtime') = strftime('%Y-%m', 'now', 'localtime')"
+        condicion_fecha = "AND strftime('%Y-%m', v.fecha_hora, 'localtime') = strftime('%Y-%m', 'now', 'localtime')"
 
     query = f'''
-        SELECT
-            metodo_pago,
-            COUNT(id_venta) as cantidad_operaciones,
-            COALESCE(SUM(total_final), 0.0) as total_recaudado
-        FROM ventas
-        WHERE estado = 1 {condicion_fecha}
-        GROUP BY metodo_pago
+        SELECT 
+            p.id_producto,
+            m.nombre || ' ' || c.litros || 'L' AS descripcion,
+            p.precio_compra AS costo_unitario,
+            p.precio_venta AS venta_unitaria,
+            SUM(dv.cantidad) AS cantidad_vendida,
+            SUM(dv.subtotal_linea) AS total_recaudado,
+            SUM(dv.cantidad * p.precio_compra) AS costo_total,
+            (SUM(dv.subtotal_linea) - SUM(dv.cantidad * p.precio_compra)) AS ganancia_bruta
+        FROM detalle_venta dv
+        JOIN ventas v ON dv.id_venta = v.id_venta
+        JOIN productos p ON dv.id_producto = p.id_producto
+        JOIN marcas m ON p.id_marca = m.id
+        JOIN capacidades c ON p.id_capacidad = c.id
+        WHERE v.estado = 1 {condicion_fecha}
+        GROUP BY p.id_producto, descripcion
+        ORDER BY ganancia_bruta DESC
     '''
-
+    
     try:
         cursor.execute(query)
         resultados = cursor.fetchall()
-
-        # Calculamos el gran total sumamdo los subtotales de cada metodo
-        gran_total = sum(fila['total_recaudado'] for fila in resultados)
-
+        
+        # Totales acumulados del periodo
+        total_recaudado = sum(f['total_recaudado'] for f in resultados)
+        total_costo = sum(f['costo_total'] for f in resultados)
+        total_ganancia = sum(f['ganancia_bruta'] for f in resultados)
+        
         return {
-            "gran_total": gran_total,
-            "desglose": resultados
+            "recaudado": total_recaudado,
+            "costo": total_costo,
+            "ganancia": total_ganancia,
+            "detalle": resultados
         }
     except sqlite3.Error as e:
-        print(f"ERROR al obtener balance de ventas: {e}")
-        return {"gran_total": 0.0, "desglose": []}
+        print(f"Error al calcular rentabilidad: {e}")
+        return {"recaudado": 0, "costo": 0, "ganancia": 0, "detalle": []}
     finally:
         conexion.close()
 
